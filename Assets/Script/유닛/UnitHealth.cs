@@ -46,7 +46,21 @@ public class UnitHealth : MonoBehaviour
     void Die()
     {
         Debug.Log($"{name} 파괴됨!");
+
+        // [추가] 기지가 파괴되었는지 확인
+        // 태그를 확인하거나 이름을 확인합니다.
+
+        // 1. 적 기지가 파괴됨 -> 플레이어 승리!
+        if (gameObject.CompareTag("Enemy") && gameObject.name.Contains("Base"))
+        {
+            GameResultManager.Instance.GameOver(true); // 승리
+        }
+        // 2. 내 기지가 파괴됨 -> 플레이어 패배...
+        else if (gameObject.CompareTag("Player") && gameObject.name.Contains("Base"))
+        {
+            GameResultManager.Instance.GameOver(false); // 패배
+        }
+
         Destroy(gameObject);
-        // 체력바는 HealthBar 스크립트에서 targetUnit이 null이 되면 알아서 사라짐
     }
 }

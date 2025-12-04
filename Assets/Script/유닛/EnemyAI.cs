@@ -1,38 +1,43 @@
 using UnityEngine;
-using UnityEngine.AI; // 필수
+using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
     [Header("Settings")]
-    public float chaseRange = 20f;   // 적이 플레이어를 인식하는 범위
-    public string targetTag = "Player"; // 쫓아갈 대상의 태그
+    public float chaseRange = 20f;   // 주변 탐색 범위
+    public string targetTag = "Player";
 
     private NavMeshAgent agent;
     private Transform currentTarget;
-    private float updateRate = 0.5f; // 0.5초마다 타겟 갱신 (성능 최적화)
+    private Transform mainBaseTarget; // [추가] 멀리 있는 적 기지 위치
+
+    private float updateRate = 0.5f;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        // 0.5초마다 "가장 가까운 타겟 찾기" 함수 실행
+
+        // [추가] 맵 전체에서 'Player' 태그를 가진 기지(MainBase)를 미리 찾아둠
+        GameObject baseObj = GameObject.Find("MainBase"); // 이름으로 찾기
+        if (baseObj != null) mainBaseTarget = baseObj.transform;
+
         InvokeRepeating("UpdateTarget", 0f, updateRate);
     }
 
     void Update()
     {
-        // 타겟이 있으면 쫓아감
+        // 1. 주변에 적 유닛이 있으면 걔를 쫓아감 (우선순위 1)
         if (currentTarget != null)
         {
             agent.SetDestination(currentTarget.position);
         }
-        else
+        // 2. 주변에 아무도 없으면? -> 적 기지로 돌격! (우선순위 2)
+        else if (mainBaseTarget != null)
         {
-            // 타겟이 없거나 죽어서 사라지면 제자리에 멈춤
-            agent.ResetPath();
+            agent.SetDestination(mainBaseTarget.position);
         }
     }
 
-    // 가장 가까운 플레이어를 찾는 함수
     void UpdateTarget()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag(targetTag);
@@ -43,7 +48,7 @@ public class EnemyAI : MonoBehaviour
         {
             float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
-            // 인식 범위(chaseRange) 안이고, 지금까지 찾은 것보다 더 가까우면 갱신
+            // chaseRange 안에서 가장 가까운 적 찾기
             if (distanceToPlayer < shortestDistance && distanceToPlayer <= chaseRange)
             {
                 shortestDistance = distanceToPlayer;
@@ -57,11 +62,10 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
-            currentTarget = null;
+            currentTarget = null; // 주변에 없으면 null -> Update에서 기지로 이동함
         }
     }
 
-    // 에디터에서 인식 범위 눈으로 보기
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
