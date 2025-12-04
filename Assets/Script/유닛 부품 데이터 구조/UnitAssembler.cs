@@ -18,7 +18,14 @@ public class UnitAssembler : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        AssembleUnit(); // 게임 시작 시 조립 실행
+
+        // [수정] 부품이 이미 스크립트로 할당되었다면 Start에서는 조립하지 않음
+        // (UnitProducer가 직접 AssembleUnit을 호출해주기 때문)
+        // 하지만 에디터에서 미리 배치해둔 유닛은 자동으로 조립되어야 함.
+        if (totalWeight == 0)
+        {
+            AssembleUnit();
+        }
     }
 
     // 데이터를 기반으로 유닛의 능력을 결정하는 함수
