@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partName: 
   partType: 0
-  weight: 0
+  weight: 10
   wattCost: 0
   modelPrefab: {fileID: 0}
-  moveSpeed: 0
-  loadCapacity: 0
+  moveSpeed: 5
+  loadCapacity: 100

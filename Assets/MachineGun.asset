@@ -17,7 +17,8 @@ MonoBehaviour:
   weight: 0
   wattCost: 0
   modelPrefab: {fileID: 0}
-  damage: 0
-  attackRange: 0
-  fireRate: 0
+  damage: 10
+  attackRange: 5
+  fireRate: 5
   attackType: 0
+  projectilePrefab: {fileID: 4284050582854179270, guid: 7231406759d03c741ad41d0cee499494, type: 3}

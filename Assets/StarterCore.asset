@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partName: 
   partType: 1
-  weight: 0
+  weight: 10
   wattCost: 0
   modelPrefab: {fileID: 0}
-  maxHealth: 0
+  maxHealth: 100
   defense: 0
   sightRange: 0
