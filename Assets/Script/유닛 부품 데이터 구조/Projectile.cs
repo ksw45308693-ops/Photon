@@ -3,28 +3,32 @@ using UnityEngine;
 public class Projectile : MonoBehaviour
 {
     public float speed = 20f;
-    public int damage = 10; // 무기 데이터에서 받아올 예정
+    public int damage = 10;
+
+    [HideInInspector] // Inspector에서는 굳이 안 보여도 됨 (코드로 설정할 거라)
+    public string targetTag; // 이 총알이 맞춰야 할 상대의 태그
 
     void Update()
     {
-        // 앞으로 전진
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
-
-        // 2초 지나면 자동 삭제 (메모리 관리)
         Destroy(gameObject, 2f);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        // 부딪힌 대상이 '적'이라면
-        if (other.CompareTag("Enemy"))
+        // 1. 설정된 목표 태그와 부딪혔는지 확인
+        if (other.CompareTag(targetTag))
         {
-            EnemyHealth enemy = other.GetComponent<EnemyHealth>();
-            if (enemy != null)
+            // 2. 부딪힌 대상에게 'UnitHealth' (체력) 스크립트가 있는지 확인
+            UnitHealth health = other.GetComponent<UnitHealth>();
+
+            if (health != null)
             {
-                enemy.TakeDamage(damage); // 데미지 주기
+                health.TakeDamage(damage); // 데미지 주기
             }
-            Destroy(gameObject); // 총알 삭제
+
+            // 3. 총알 삭제
+            Destroy(gameObject);
         }
     }
 }

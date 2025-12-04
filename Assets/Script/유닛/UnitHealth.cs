@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EnemyHealth : MonoBehaviour
+public class UnitHealth : MonoBehaviour
 {
     public int maxHealth = 100;
     private int currentHealth;
@@ -13,7 +13,8 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        Debug.Log($"{name} 피격! 남은 체력: {currentHealth}");
+        // 누가 맞았는지 이름과 남은 체력 로그 출력
+        Debug.Log($"{name} 피격! 데미지: {damage}, 남은 체력: {currentHealth}");
 
         if (currentHealth <= 0)
         {
@@ -24,6 +25,6 @@ public class EnemyHealth : MonoBehaviour
     void Die()
     {
         Debug.Log($"{name} 파괴됨!");
-        Destroy(gameObject); // 적 유닛 제거
+        Destroy(gameObject);
     }
 }
