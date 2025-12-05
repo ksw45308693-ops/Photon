@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2084834460258493381}
+  - component: {fileID: 6965748580473604784}
   - component: {fileID: 2790185977138834196}
   - component: {fileID: 1308696037511399639}
   - component: {fileID: 2437900447294459119}
@@ -42,6 +43,22 @@ Transform:
   - {fileID: 3647440078264084105}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6965748580473604784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782772325366954143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 201442e63f5c28846905119dd3bd0a57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyBaseTag: Enemy
+  targetWaypoint: {fileID: 0}
+  targetBase: {fileID: 0}
+  aggroRange: 5
 --- !u!33 &2790185977138834196
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -70,7 +87,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 9a946e8f7da9fef49aa70b91f18e0a0c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -144,7 +161,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 782772325366954143}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3e40eea3bafc47458566a37a4f8afd8, type: 3}
   m_Name: 
@@ -203,7 +220,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 782772325366954143}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c43ee5992c087a8468fbc7bf5e66c6a0, type: 3}
   m_Name: 

@@ -14,7 +14,7 @@ public class UnitAttack : MonoBehaviour
     {
         assembler = GetComponent<UnitAssembler>();
 
-        // --- [중요] 내 태그를 보고 적 태그를 자동 결정 ---
+        // --- 내 태그를 보고 적 태그를 자동 결정 ---
         if (gameObject.CompareTag("Player"))
         {
             enemyTag = "Enemy";
@@ -25,24 +25,26 @@ public class UnitAttack : MonoBehaviour
         }
         else
         {
-            // 태그가 없으면 기본값으로 Enemy 설정 (안전장치)
-            enemyTag = "Enemy";
+            enemyTag = "Enemy"; // 안전장치
         }
     }
 
     void Update()
     {
-        if (assembler.weaponPart == null) return;
+        // 부품이 없으면 공격 불가
+        if (assembler == null || assembler.weaponPart == null) return;
 
         FindNearestEnemy();
 
         if (currentTarget != null)
         {
+            // 적을 바라보게 회전
             Vector3 dir = currentTarget.position - transform.position;
             Quaternion lookRot = Quaternion.LookRotation(dir);
             Vector3 rotation = Quaternion.Lerp(transform.rotation, lookRot, Time.deltaTime * 10f).eulerAngles;
             transform.rotation = Quaternion.Euler(0f, rotation.y, 0f);
 
+            // 발사 타이머 체크
             if (fireCountdown <= 0f)
             {
                 Shoot();
@@ -53,29 +55,65 @@ public class UnitAttack : MonoBehaviour
         fireCountdown -= Time.deltaTime;
     }
 
+    // --- [수정된 부분] 우선순위 타겟팅 로직 (유닛 > 기지) ---
     void FindNearestEnemy()
     {
         float range = assembler.weaponPart.attackRange;
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, range);
 
-        float shortestDistance = Mathf.Infinity;
-        GameObject nearestEnemy = null;
+        GameObject bestTargetUnit = null; // 우선순위 1: 유닛
+        GameObject bestTargetBase = null; // 우선순위 2: 기지(건물)
 
-        foreach (var hitCollider in hitColliders)
+        float closestUnitDist = Mathf.Infinity;
+        float closestBaseDist = Mathf.Infinity;
+
+        foreach (var hit in hitColliders)
         {
-            // --- [수정] 위에서 결정한 enemyTag를 가진 애만 찾음 ---
-            if (hitCollider.CompareTag(enemyTag))
+            // 1. 나의 적 태그인지 확인
+            if (hit.CompareTag(enemyTag))
             {
-                float distanceToEnemy = Vector3.Distance(transform.position, hitCollider.transform.position);
-                if (distanceToEnemy < shortestDistance)
+                float dist = Vector3.Distance(transform.position, hit.transform.position);
+
+                // 2. 이 적이 '기지'인지 이름으로 판단
+                // (주의: 기지 오브젝트 이름에 "Base"나 "Tower"가 포함되어 있어야 합니다!)
+                bool isBase = hit.name.Contains("Base") || hit.name.Contains("Tower");
+
+                if (isBase)
                 {
-                    shortestDistance = distanceToEnemy;
-                    nearestEnemy = hitCollider.gameObject;
+                    // 기지라면 -> 가장 가까운 기지 기억
+                    if (dist < closestBaseDist)
+                    {
+                        closestBaseDist = dist;
+                        bestTargetBase = hit.gameObject;
+                    }
+                }
+                else
+                {
+                    // 유닛(기지가 아님)이라면 -> 가장 가까운 유닛 기억
+                    if (dist < closestUnitDist)
+                    {
+                        closestUnitDist = dist;
+                        bestTargetUnit = hit.gameObject;
+                    }
                 }
             }
         }
 
-        currentTarget = (nearestEnemy != null) ? nearestEnemy.transform : null;
+        // [핵심 로직] 최종 타겟 결정
+        // 사거리 안에 '유닛'이 하나라도 있으면 -> 무조건 유닛을 때림 (기지가 더 가까워도 무시)
+        if (bestTargetUnit != null)
+        {
+            currentTarget = bestTargetUnit.transform;
+        }
+        // 유닛이 없으면 -> 그때서야 기지를 때림
+        else if (bestTargetBase != null)
+        {
+            currentTarget = bestTargetBase.transform;
+        }
+        else
+        {
+            currentTarget = null;
+        }
     }
 
     void Shoot()
@@ -88,9 +126,7 @@ public class UnitAttack : MonoBehaviour
         if (projectile != null)
         {
             projectile.damage = assembler.weaponPart.damage;
-
-            // --- [핵심] 총알에게 "누구를 맞춰야 하는지" 알려줌 ---
-            projectile.targetTag = enemyTag;
+            projectile.targetTag = enemyTag; // 총알에게 적 태그 전달
         }
     }
 

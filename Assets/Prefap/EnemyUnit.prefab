@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 4511245888715866867}
   - component: {fileID: 6176567788857777333}
   - component: {fileID: 4490650968893094944}
+  - component: {fileID: 5217761160762071757}
   m_Layer: 6
   m_Name: EnemyUnit
   m_TagString: Enemy
@@ -144,7 +145,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4308338671758045868}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3e40eea3bafc47458566a37a4f8afd8, type: 3}
   m_Name: 
@@ -203,13 +204,29 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4308338671758045868}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2a887e0e2497b349865296c643f0e07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   chaseRange: 10
   targetTag: Player
+--- !u!114 &5217761160762071757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4308338671758045868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 201442e63f5c28846905119dd3bd0a57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyBaseTag: Player
+  targetWaypoint: {fileID: 0}
+  targetBase: {fileID: 0}
+  aggroRange: 5
 --- !u!1 &4802088866207580647
 GameObject:
   m_ObjectHideFlags: 0
