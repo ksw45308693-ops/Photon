@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Photon.Pun; // [필수] 포톤 기능 추가
 
 public class UnitSelectionManager : MonoBehaviour
 {
     public LayerMask unitLayer;
     public LayerMask groundLayer;
-    public RectTransform selectionBox; // [추가] UI 박스 연결
+    public RectTransform selectionBox; // UI 박스 연결
 
     private List<UnitMovement> selectedUnits = new List<UnitMovement>();
     private Camera cam;
@@ -46,20 +47,17 @@ public class UnitSelectionManager : MonoBehaviour
         {
             if (isDragging)
             {
-                // 드래그 선택 수행
                 SelectUnitsInBox();
-                // 박스 끄기
                 if (selectionBox != null) selectionBox.gameObject.SetActive(false);
                 isDragging = false;
             }
             else
             {
-                // 그냥 클릭 선택 수행 (기존 기능)
                 HandleSingleClick();
             }
         }
 
-        // 4. 우클릭: 이동 명령 (기존 기능)
+        // 4. 우클릭: 이동 명령
         if (Input.GetMouseButtonDown(1))
         {
             HandleMovement();
@@ -78,38 +76,36 @@ public class UnitSelectionManager : MonoBehaviour
         float height = curMousePos.y - startPos.y;
 
         selectionBox.sizeDelta = new Vector2(Mathf.Abs(width), Mathf.Abs(height));
-
-        // 너비/높이가 음수일 때(왼쪽/아래로 드래그) 위치 보정
         selectionBox.anchoredPosition = startPos + new Vector2(width < 0 ? width : 0, height < 0 ? height : 0);
     }
 
     // 박스 안에 있는 유닛들 찾아서 선택
     void SelectUnitsInBox()
     {
-        // Shift 안 눌렀으면 기존 선택 해제
         if (!Input.GetKey(KeyCode.LeftShift))
         {
             DeselectAll();
         }
 
-        // 드래그 박스 영역 (UI 좌표)
-        // Min/Max 계산으로 뒤집힌 드래그도 정상 처리
         Vector2 min = selectionBox.anchoredPosition;
         Vector2 max = min + selectionBox.sizeDelta;
 
-        // 씬(Scene)에 있는 모든 유닛을 검사 (최적화하려면 리스트 관리 추천)
+        // 씬에 있는 모든 유닛 검사
         UnitMovement[] allUnits = FindObjectsOfType<UnitMovement>();
 
         foreach (var unit in allUnits)
         {
-            // 유닛의 월드 좌표를 화면(Screen) 좌표로 변환
             Vector3 screenPos = cam.WorldToScreenPoint(unit.transform.position);
 
-            // 화면 좌표가 박스 범위 안에 있는지 확인
             if (screenPos.x > min.x && screenPos.x < max.x &&
                 screenPos.y > min.y && screenPos.y < max.y)
             {
-                Select(unit);
+                // [핵심 추가] 내 소유권(IsMine)이 있는 유닛인지 확인
+                PhotonView pv = unit.GetComponent<PhotonView>();
+                if (pv != null && pv.IsMine)
+                {
+                    Select(unit);
+                }
             }
         }
     }
@@ -124,8 +120,13 @@ public class UnitSelectionManager : MonoBehaviour
             UnitMovement unit = hit.collider.GetComponent<UnitMovement>();
             if (unit != null)
             {
-                if (!Input.GetKey(KeyCode.LeftShift)) DeselectAll();
-                Select(unit);
+                // [핵심 추가] 클릭했을 때도 내 유닛인지 확인
+                PhotonView pv = unit.GetComponent<PhotonView>();
+                if (pv != null && pv.IsMine)
+                {
+                    if (!Input.GetKey(KeyCode.LeftShift)) DeselectAll();
+                    Select(unit);
+                }
             }
         }
         else
@@ -143,6 +144,7 @@ public class UnitSelectionManager : MonoBehaviour
         {
             foreach (var unit in selectedUnits)
             {
+                // UnitMovement 내부에서도 IsMine 체크를 해주면 더 안전합니다.
                 unit.MoveTo(hit.point);
             }
         }

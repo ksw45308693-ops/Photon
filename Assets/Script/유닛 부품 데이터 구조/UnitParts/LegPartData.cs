@@ -1,12 +1,15 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Leg", menuName = "Nova2/Parts/Leg")]
-public class LegPartData : PartData
+public class LegPartData : PartBase // [변경] PartBase 상속
 {
     [Header("Leg Stats")]
     public float moveSpeed;    // 이동 속도
-    public int loadCapacity;   // 최대 하중 (이걸 넘으면 느려짐)
+    public int loadCapacity;   // 최대 하중
 
-    // 생성자에서 타입 자동 설정
-    private void OnEnable() => partType = PartType.Leg;
+    // 생성 시 자동으로 타입 설정
+    private void OnEnable()
+    {
+        partType = PartType.Leg;
+    }
 }

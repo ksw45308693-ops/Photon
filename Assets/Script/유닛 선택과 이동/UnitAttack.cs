@@ -1,37 +1,23 @@
 using UnityEngine;
+using Photon.Pun;
 
-public class UnitAttack : MonoBehaviour
+public class UnitAttack : MonoBehaviourPun
 {
     private UnitAssembler assembler;
     public Transform firePoint;
     private float fireCountdown = 0f;
     private Transform currentTarget;
-
-    // 공격 대상 태그 (자동 설정됨)
-    private string enemyTag;
+    private TeamEntity myTeam;
 
     void Start()
     {
         assembler = GetComponent<UnitAssembler>();
-
-        // --- [중요] 내 태그를 보고 적 태그를 자동 결정 ---
-        if (gameObject.CompareTag("Player"))
-        {
-            enemyTag = "Enemy";
-        }
-        else if (gameObject.CompareTag("Enemy"))
-        {
-            enemyTag = "Player";
-        }
-        else
-        {
-            // 태그가 없으면 기본값으로 Enemy 설정 (안전장치)
-            enemyTag = "Enemy";
-        }
+        myTeam = GetComponent<TeamEntity>();
     }
 
     void Update()
     {
+        if (!photonView.IsMine) return;
         if (assembler.weaponPart == null) return;
 
         FindNearestEnemy();
@@ -45,12 +31,30 @@ public class UnitAttack : MonoBehaviour
 
             if (fireCountdown <= 0f)
             {
-                Shoot();
+                // [중요] 공격 시 네트워크로 발사 명령 전송
+                photonView.RPC("RPC_Shoot", RpcTarget.All);
                 fireCountdown = 1f / assembler.weaponPart.fireRate;
             }
         }
-
         fireCountdown -= Time.deltaTime;
+    }
+
+    [PunRPC]
+    void RPC_Shoot()
+    {
+        if (assembler.weaponPart.projectilePrefab == null) return;
+
+        GameObject bulletGO = Instantiate(assembler.weaponPart.projectilePrefab, firePoint.position, firePoint.rotation);
+
+        Projectile projectile = bulletGO.GetComponent<Projectile>();
+        if (projectile != null)
+        {
+            projectile.damage = assembler.weaponPart.damage;
+            projectile.shooterTeamID = myTeam.GetTeamID();
+
+            // [중요] 쏜 사람이 '나'라면 진짜 총알, 아니면 가짜 총알
+            projectile.isRealBullet = photonView.IsMine;
+        }
     }
 
     void FindNearestEnemy()
@@ -63,8 +67,10 @@ public class UnitAttack : MonoBehaviour
 
         foreach (var hitCollider in hitColliders)
         {
-            // --- [수정] 위에서 결정한 enemyTag를 가진 애만 찾음 ---
-            if (hitCollider.CompareTag(enemyTag))
+            // [확인] 자식 콜라이더여도 부모의 명찰을 찾음
+            TeamEntity targetTeam = hitCollider.GetComponentInParent<TeamEntity>();
+
+            if (targetTeam != null && targetTeam.GetTeamID() != myTeam.GetTeamID())
             {
                 float distanceToEnemy = Vector3.Distance(transform.position, hitCollider.transform.position);
                 if (distanceToEnemy < shortestDistance)
@@ -74,32 +80,6 @@ public class UnitAttack : MonoBehaviour
                 }
             }
         }
-
         currentTarget = (nearestEnemy != null) ? nearestEnemy.transform : null;
-    }
-
-    void Shoot()
-    {
-        if (assembler.weaponPart.projectilePrefab == null) return;
-
-        GameObject bulletGO = Instantiate(assembler.weaponPart.projectilePrefab, firePoint.position, firePoint.rotation);
-
-        Projectile projectile = bulletGO.GetComponent<Projectile>();
-        if (projectile != null)
-        {
-            projectile.damage = assembler.weaponPart.damage;
-
-            // --- [핵심] 총알에게 "누구를 맞춰야 하는지" 알려줌 ---
-            projectile.targetTag = enemyTag;
-        }
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        if (assembler != null && assembler.weaponPart != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, assembler.weaponPart.attackRange);
-        }
     }
 }

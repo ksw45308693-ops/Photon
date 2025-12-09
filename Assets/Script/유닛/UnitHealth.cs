@@ -1,37 +1,50 @@
 using UnityEngine;
+using Photon.Pun; // [필수] RPC 사용을 위해 추가
 
-public class UnitHealth : MonoBehaviour
+public class UnitHealth : MonoBehaviourPun // MonoBehaviour -> MonoBehaviourPun 변경
 {
     public int maxHealth = 100;
     private int currentHealth;
 
-    // [추가 1] 체력바 프리팹 연결용
+    [Header("UI Linking")]
     public GameObject healthBarPrefab;
-    private HealthBar healthBarInstance; // 생성된 체력바
+    private HealthBar healthBarInstance;
 
     void Start()
     {
-        currentHealth = maxHealth;
-
-        // [추가 2] 게임 시작 시 체력바 생성
-        if (healthBarPrefab != null)
-        {
-            // Canvas(체력바)를 게임 세상에 생성
-            GameObject hb = Instantiate(healthBarPrefab);
-            healthBarInstance = hb.GetComponent<HealthBar>();
-
-            // 체력바에게 주인(나)을 알려줌
-            healthBarInstance.targetUnit = this.transform;
-            healthBarInstance.SetHealth(currentHealth, maxHealth);
-        }
+        if (currentHealth == 0) currentHealth = maxHealth;
+        if (healthBarPrefab != null && healthBarInstance == null) CreateHealthBar();
     }
 
+    void CreateHealthBar()
+    {
+        GameObject hb = Instantiate(healthBarPrefab);
+        healthBarInstance = hb.GetComponent<HealthBar>();
+        healthBarInstance.targetUnit = this.transform;
+        healthBarInstance.SetHealth(currentHealth, maxHealth);
+    }
+
+    public void SetMaxHealth(int newMax)
+    {
+        maxHealth = newMax;
+        currentHealth = maxHealth;
+        if (healthBarInstance == null && healthBarPrefab != null) CreateHealthBar();
+        else if (healthBarInstance != null) healthBarInstance.SetHealth(currentHealth, maxHealth);
+    }
+
+    // [핵심 수정] 외부에서는 이 함수를 부르지만, 실제로는 RPC를 쏩니다.
     public void TakeDamage(int damage)
     {
-        currentHealth -= damage;
-        Debug.Log($"{name} 피격! 남은 체력: {currentHealth}");
+        // "모든 사람(All)들아, 내 체력 깎는 함수(RPC_TakeDamage) 실행해줘!"
+        photonView.RPC("RPC_TakeDamage", RpcTarget.All, damage);
+    }
 
-        // [추가 3] 체력바 갱신
+    // [추가] 실제로 체력이 깎이는 곳 (네트워크 동기화됨)
+    [PunRPC]
+    public void RPC_TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+
         if (healthBarInstance != null)
         {
             healthBarInstance.SetHealth(currentHealth, maxHealth);
@@ -45,22 +58,10 @@ public class UnitHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log($"{name} 파괴됨!");
+        if (healthBarInstance != null) Destroy(healthBarInstance.gameObject);
 
-        // [추가] 기지가 파괴되었는지 확인
-        // 태그를 확인하거나 이름을 확인합니다.
-
-        // 1. 적 기지가 파괴됨 -> 플레이어 승리!
-        if (gameObject.CompareTag("Enemy") && gameObject.name.Contains("Base"))
-        {
-            GameResultManager.Instance.GameOver(true); // 승리
-        }
-        // 2. 내 기지가 파괴됨 -> 플레이어 패배...
-        else if (gameObject.CompareTag("Player") && gameObject.name.Contains("Base"))
-        {
-            GameResultManager.Instance.GameOver(false); // 패배
-        }
-
-        Destroy(gameObject);
+        // 내가 주인이면 포톤 파괴 명령, 아니면 로컬 파괴 (안전장치)
+        if (photonView.IsMine) PhotonNetwork.Destroy(gameObject);
+        else if (gameObject != null) gameObject.SetActive(false); // 혹은 로컬 삭제
     }
 }

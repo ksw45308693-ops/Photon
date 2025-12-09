@@ -1,52 +1,59 @@
 using UnityEngine;
+using Photon.Pun;
 
-public class EnemySpawner : MonoBehaviour
+public class EnemySpawner : MonoBehaviourPun
 {
-    [Header("Spawn Info")]
-    public GameObject enemyPrefab; // 생성할 적 유닛 프리팹
-    public Transform spawnPoint;   // 생성 위치 (EnemyBase 앞)
-    public float spawnInterval = 10f; // 몇 초마다 생성할지?
+    public string enemyPrefabName = "Unit";
+    public Transform spawnPoint;
+    public float spawnInterval = 10f;
 
-    [Header("Enemy Parts")]
-    // 적 유닛에게 달아줄 부품들 (Inspector에서 설정)
-    public LegPartData leg;
-    public CorePartData core;
-    public WeaponPartData weapon;
+    public LegPartData enemyLeg;
+    public CorePartData enemyCore;
+    public WeaponPartData enemyWeapon;
 
     private float timer = 0f;
 
     void Update()
     {
+        if (PhotonNetwork.IsMasterClient == false)
+            return;
+
         timer += Time.deltaTime;
 
-        // 시간이 되면 스폰!
         if (timer >= spawnInterval)
         {
             SpawnEnemy();
-            timer = 0f; // 타이머 초기화
+            timer = 0f;
         }
     }
 
     void SpawnEnemy()
     {
-        if (enemyPrefab == null || spawnPoint == null) return;
-
-        // 1. 유닛 생성
-        GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-
-        // 2. 태그 설정 (중요: 적 기지의 태그를 따라감 -> Enemy)
-        newEnemy.tag = gameObject.tag;
-
-        // 3. 부품 조립
-        UnitAssembler assembler = newEnemy.GetComponent<UnitAssembler>();
-        if (assembler != null)
+        // 1) 적 유닛 조립 JSON 생성
+        UnitNetworkSync.UnitPartsData parts = new UnitNetworkSync.UnitPartsData
         {
-            assembler.legPart = leg;
-            assembler.corePart = core;
-            assembler.weaponPart = weapon;
-            assembler.AssembleUnit();
-        }
+            legID = enemyLeg.id,
+            coreID = enemyCore.id,
+            weaponID = enemyWeapon.id
+        };
 
-        Debug.Log("적군 증원군 도착!");
+        string json = JsonUtility.ToJson(parts);
+
+        // 2) InstantiationData 전달
+        object[] instantiationData = new object[]
+        {
+            gameObject.tag,  // 예: "Enemy"
+            json
+        };
+
+        PhotonNetwork.Instantiate(
+            enemyPrefabName,
+            spawnPoint.position,
+            spawnPoint.rotation,
+            0,
+            instantiationData
+        );
+
+        Debug.Log("AI 적 유닛 생성");
     }
 }

@@ -1,15 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; // Legacy UI 사용
+using UnityEngine.UI;
+using Photon.Pun; // [추가] 포톤 네임스페이스
 
-public class ChatSystem : MonoBehaviour
+// MonoBehaviour 대신 MonoBehaviourPun으로 변경하여 photonView 사용 가능하게 함
+public class ChatSystem : MonoBehaviourPun
 {
     [Header("UI Components")]
-    public InputField chatInput;      // 입력창
-    public Transform chatContent;     // Scroll View -> Content
-    public GameObject textPrefab;     // 채팅 글씨 프리팹
-    public Button sendButton;         // [추가됨] 전송 버튼
+    public InputField chatInput;
+    public Transform chatContent;
+    public GameObject textPrefab;
+    public Button sendButton;
 
     [Header("Settings")]
     public int maxMessages = 25;
@@ -18,57 +20,48 @@ public class ChatSystem : MonoBehaviour
 
     void Start()
     {
-        // 1. 엔터키를 쳤을 때 실행 (입력이 끝났을 때)
         chatInput.onEndEdit.AddListener(OnEndEditEvent);
-
-        // 2. 버튼을 클릭했을 때 실행
-        if (sendButton != null)
-        {
-            sendButton.onClick.AddListener(OnSendButtonClicked);
-        }
+        if (sendButton != null) sendButton.onClick.AddListener(OnSendButtonClicked);
     }
 
     void Update()
     {
-        // 엔터키를 누르면 입력창에 포커스 가기 (편의성)
         if (Input.GetKeyDown(KeyCode.Return) && !chatInput.isFocused)
         {
             chatInput.ActivateInputField();
         }
     }
 
-    // 엔터키 이벤트 처리
     void OnEndEditEvent(string text)
     {
-        // 엔터키를 눌러서 입력이 끝난 경우에만 전송 (다른 곳 클릭해서 포커스 잃은 경우 제외)
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             SendMessageToChat();
         }
     }
 
-    // 버튼 클릭 이벤트 처리
     public void OnSendButtonClicked()
     {
         SendMessageToChat();
     }
 
-    // [핵심] 실제 메시지를 보내는 공통 함수
     void SendMessageToChat()
     {
-        if (string.IsNullOrWhiteSpace(chatInput.text)) return; // 빈칸이면 무시
+        if (string.IsNullOrWhiteSpace(chatInput.text)) return;
 
-        // --- [여기서 텍스트 전송] ---
-        AddChatMessage("나: " + chatInput.text);
+        // [핵심 변경] 로컬 함수(AddChatMessage)를 직접 부르지 않고, RPC를 통해 모두에게 전송
+        // RpcTarget.All : 나를 포함한 방 안의 모든 사람에게 실행하라
+        photonView.RPC("RPC_AddChatMessage", RpcTarget.All, "User " + PhotonNetwork.LocalPlayer.ActorNumber + ": " + chatInput.text);
 
-        // 입력창 비우기 및 포커스 다시 잡기
         chatInput.text = "";
-        chatInput.ActivateInputField(); // 전송 후 바로 다시 타자 칠 수 있게 함
+        chatInput.ActivateInputField();
     }
 
-    // 화면에 텍스트 생성하는 함수
-    public void AddChatMessage(string message)
+    // [PunRPC] 속성을 붙여서 네트워크를 통해 호출될 수 있게 함
+    [PunRPC]
+    public void RPC_AddChatMessage(string message)
     {
+        // 실제 텍스트 생성 로직은 동일
         if (messageList.Count >= maxMessages)
         {
             Destroy(messageList[0]);

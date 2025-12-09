@@ -3,64 +3,85 @@ using UnityEngine.AI;
 
 public class UnitAssembler : MonoBehaviour
 {
-    [Header("Parts Slots")]
+    [Header("Visual Settings")]
+    public MeshRenderer bodyRenderer; // 유닛의 색깔/외형을 바꿀 렌더러
+
+    [Header("Current Parts (Data)")]
+    // [수정 1] 우리가 만든 ScriptableObject 타입(LegPartData 등)을 사용해야 합니다.
     public LegPartData legPart;
     public CorePartData corePart;
     public WeaponPartData weaponPart;
 
     [Header("Final Stats (Read Only)")]
-    public int totalHealth;
     public float finalSpeed;
+    public int totalHealth;
     public int totalWeight;
 
+    // 내부 컴포넌트
     private NavMeshAgent agent;
+    private UnitHealth healthScript;
 
-    void Start()
+    void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
-
-        // [수정] 부품이 이미 스크립트로 할당되었다면 Start에서는 조립하지 않음
-        // (UnitProducer가 직접 AssembleUnit을 호출해주기 때문)
-        // 하지만 에디터에서 미리 배치해둔 유닛은 자동으로 조립되어야 함.
-        if (totalWeight == 0)
-        {
-            AssembleUnit();
-        }
+        healthScript = GetComponent<UnitHealth>();
     }
 
-    // 데이터를 기반으로 유닛의 능력을 결정하는 함수
+    // 외부(UnitNetworkSync, UnitProducer)에서 호출하는 조립 함수
     public void AssembleUnit()
     {
+        // 안전장치: 부품이 하나라도 없으면 중단
         if (legPart == null || corePart == null || weaponPart == null)
         {
-            Debug.LogError("부품이 모두 장착되지 않았습니다!");
+            Debug.LogError($"[UnitAssembler] 부품이 누락되었습니다! ({name})");
             return;
         }
 
-        // 1. 무게 계산 (다리 + 코어 + 무기)
-        totalWeight = legPart.weight + corePart.weight + weaponPart.weight;
+        // --------------------------------------------------------
+        // 1. 시각적 변경 (색상/재질)
+        // --------------------------------------------------------
+        if (bodyRenderer != null && corePart != null)
+        {
+            // bodyRenderer.material = corePart.unitMaterial; // (필요시 주석 해제)
+        }
 
-        // 2. 체력 계산
+        // --------------------------------------------------------
+        // 2. 능력치 계산 (체력)
+        // --------------------------------------------------------
         totalHealth = corePart.maxHealth;
 
-        // 3. 이동 속도 계산 (노바2 핵심: 과적 패널티)
+        // [수정 2] 계산한 체력을 UnitHealth 스크립트에 '진짜로' 적용
+        if (healthScript != null)
+        {
+            // [수정됨] 줄바꿈 없이 한 줄로 작성
+            healthScript.SetMaxHealth(totalHealth);
+        }
+
+        // --------------------------------------------------------
+        // 3. 능력치 계산 (속도 및 무게)
+        // --------------------------------------------------------
+        totalWeight = legPart.weight + corePart.weight + weaponPart.weight;
+
+        // [수정 3] 노바2 스타일 과적(Overweight) 패널티 적용
         if (totalWeight > legPart.loadCapacity)
         {
-            // 하중 초과 시 속도 50% 감소 (예시 로직)
+            // 무게가 한계보다 무거우면 속도 50% 감소
             finalSpeed = legPart.moveSpeed * 0.5f;
-            Debug.LogWarning("경고: 하중 초과! 이동 속도가 감소합니다.");
+            Debug.LogWarning($"{name}: 과적 상태! 속도가 느려집니다.");
         }
         else
         {
             finalSpeed = legPart.moveSpeed;
         }
 
-        // 4. 실제 유닛(NavMeshAgent)에 속도 적용
+        // [수정 4] 계산한 속도를 NavMeshAgent에 '진짜로' 적용
         if (agent != null)
         {
             agent.speed = finalSpeed;
+            // 회전 속도도 다리 부품에 따라 다르게 할 수 있음 (선택사항)
+            agent.angularSpeed = 120f;
         }
 
-        Debug.Log($"유닛 조립 완료: 체력({totalHealth}), 속도({finalSpeed}), 무게({totalWeight}/{legPart.loadCapacity})");
+        Debug.Log($"[조립 완료] HP:{totalHealth}, Speed:{finalSpeed}, Weight:{totalWeight}/{legPart.loadCapacity}");
     }
 }
