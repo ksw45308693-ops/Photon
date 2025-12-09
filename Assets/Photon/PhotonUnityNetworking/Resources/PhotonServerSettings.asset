@@ -42,6 +42,8 @@ MonoBehaviour:
   - RPC_AddChatMessage
   - RPC_Shoot
   - RPC_TakeDamage
+  - RPC_MeleeAttack
+  - RPC_RangedAttack
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
