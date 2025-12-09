@@ -2874,8 +2874,13 @@ MonoBehaviour:
   unitPrefabName: Unit
   spawnPoint: {fileID: 1564508616}
   recipes:
-  - name: "\uAE30\uBCF8\uB85C\uBD07"
+  - name: "\uADFC\uAC70\uB9AC"
     cost: 100
+    leg: {fileID: 11400000, guid: 4e0fc41a15b8dc34e9b4e060699aec2c, type: 2}
+    core: {fileID: 11400000, guid: 0480a0060362863409a1e96934288cfa, type: 2}
+    weapon: {fileID: 11400000, guid: c0f6ad0a8820c7a469635299ba05b883, type: 2}
+  - name: "\uC6D0\uAC70\uB9AC"
+    cost: 200
     leg: {fileID: 11400000, guid: 4e0fc41a15b8dc34e9b4e060699aec2c, type: 2}
     core: {fileID: 11400000, guid: 0480a0060362863409a1e96934288cfa, type: 2}
     weapon: {fileID: 11400000, guid: ad80251b8b299ac4d8164248731359d7, type: 2}
@@ -3602,8 +3607,9 @@ GameObject:
   - component: {fileID: 1301517813}
   - component: {fileID: 1301517812}
   - component: {fileID: 1301517811}
+  - component: {fileID: 1301517814}
   m_Layer: 5
-  m_Name: Button (Legacy) (1)
+  m_Name: "\uC6D0\uAC70\uB9AC"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3672,7 +3678,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1301517812}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1301517814}
+        m_TargetAssemblyTypeName: ProductionButton, Assembly-CSharp
+        m_MethodName: OnClickProduce
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1301517812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3711,6 +3729,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1301517809}
   m_CullTransparentMesh: 1
+--- !u!114 &1301517814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1301517809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f8bc65b0fb8d694ea2527344283954e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  recipeIndex: 1
 --- !u!1 &1347451334
 GameObject:
   m_ObjectHideFlags: 0
@@ -3919,8 +3950,9 @@ GameObject:
   - component: {fileID: 1409366183}
   - component: {fileID: 1409366182}
   - component: {fileID: 1409366181}
+  - component: {fileID: 1409366184}
   m_Layer: 5
-  m_Name: Button (Legacy)
+  m_Name: "\uADFC\uAC70\uB9AC"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3989,7 +4021,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1409366182}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1409366184}
+        m_TargetAssemblyTypeName: ProductionButton, Assembly-CSharp
+        m_MethodName: OnClickProduce
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1409366182
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4028,6 +4072,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1409366179}
   m_CullTransparentMesh: 1
+--- !u!114 &1409366184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1409366179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f8bc65b0fb8d694ea2527344283954e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  recipeIndex: 0
 --- !u!1 &1451354039
 GameObject:
   m_ObjectHideFlags: 0
@@ -5027,11 +5084,16 @@ MonoBehaviour:
   unitPrefabName: EnemyUnit
   spawnPoint: {fileID: 825931497}
   recipes:
-  - name: "\uAE61\uD1B5\uC720\uB2DB"
-    cost: 100
+  - name: "\uC6D0\uAC70\uB9AC"
+    cost: 200
     leg: {fileID: 11400000, guid: 4e0fc41a15b8dc34e9b4e060699aec2c, type: 2}
     core: {fileID: 11400000, guid: 0480a0060362863409a1e96934288cfa, type: 2}
     weapon: {fileID: 11400000, guid: ad80251b8b299ac4d8164248731359d7, type: 2}
+  - name: "\uADFC\uAC70\uB9AC"
+    cost: 100
+    leg: {fileID: 11400000, guid: 4e0fc41a15b8dc34e9b4e060699aec2c, type: 2}
+    core: {fileID: 11400000, guid: 0480a0060362863409a1e96934288cfa, type: 2}
+    weapon: {fileID: 11400000, guid: c0f6ad0a8820c7a469635299ba05b883, type: 2}
 --- !u!114 &1684900844
 MonoBehaviour:
   m_ObjectHideFlags: 0
