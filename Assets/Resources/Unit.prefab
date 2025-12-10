@@ -16,11 +16,10 @@ GameObject:
   - component: {fileID: 9057176925350187712}
   - component: {fileID: 2457973589078178877}
   - component: {fileID: 2700121556547526274}
-  - component: {fileID: 3887110206123958964}
-  - component: {fileID: 7944009868276249702}
   - component: {fileID: 467149983313811808}
   - component: {fileID: 373277290169693006}
   - component: {fileID: -5893181256706103055}
+  - component: {fileID: -77768131711275314}
   m_Layer: 6
   m_Name: Unit
   m_TagString: Player
@@ -181,40 +180,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   firePoint: {fileID: 3647440078264084105}
---- !u!114 &3887110206123958964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 782772325366954143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7edc00e01c944e4f9024f225f134533, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bodyRenderer: {fileID: 0}
-  legPart: {fileID: 11400000, guid: 4e0fc41a15b8dc34e9b4e060699aec2c, type: 2}
-  corePart: {fileID: 11400000, guid: 0480a0060362863409a1e96934288cfa, type: 2}
-  weaponPart: {fileID: 11400000, guid: ad80251b8b299ac4d8164248731359d7, type: 2}
-  finalSpeed: 0
-  totalHealth: 0
-  totalWeight: 0
---- !u!114 &7944009868276249702
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 782772325366954143}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c43ee5992c087a8468fbc7bf5e66c6a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  detectionRange: 15
-  stopDistance: 8
-  updateRate: 0.5
 --- !u!114 &467149983313811808
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -266,6 +231,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d731fe129ad4c41b7104f43bd35f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-77768131711275314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782772325366954143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe2c299f73dac6947a6dd37ebfc9977d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  unitData: {fileID: 11400000, guid: f320fd8efe3f1524cb1f564a10d05c6d, type: 2}
+  healthScript: {fileID: 0}
+  agent: {fileID: 0}
 --- !u!1 &6726748827545990284
 GameObject:
   m_ObjectHideFlags: 0

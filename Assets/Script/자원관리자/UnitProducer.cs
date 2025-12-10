@@ -3,58 +3,36 @@ using Photon.Pun;
 
 public class UnitProducer : MonoBehaviour
 {
-    public string unitPrefabName = "Unit";
     public Transform spawnPoint;
 
-    [System.Serializable]
-    public class UnitRecipe
-    {
-        public string name;
-        public int cost;
-        public LegPartData leg;
-        public CorePartData core;
-        public WeaponPartData weapon;
-    }
-
-    public UnitRecipe[] recipes;
+    // [변경] 복잡한 레시피 대신, 심플하게 유닛 데이터 리스트만 있으면 됨
+    public UnitData[] availableUnits;
 
     public void ProduceUnit(int index)
     {
-        if (index < 0 || index >= recipes.Length)
-            return;
+        if (index < 0 || index >= availableUnits.Length) return;
 
-        UnitRecipe recipe = recipes[index];
+        UnitData data = availableUnits[index];
 
-        // 1) 자원 체크
-        if (ResourceManager.Instance.UseWatt(recipe.cost) == false)
+        // 1. 자원 체크
+        if (ResourceManager.Instance.UseWatt(data.cost) == false)
         {
-            Debug.Log("와트 부족!");
+            Debug.Log("자원 부족!");
             return;
         }
 
-        // 2) 조립 데이터 준비
-        UnitNetworkSync.UnitPartsData parts = new UnitNetworkSync.UnitPartsData
-        {
-            legID = recipe.leg.id,
-            coreID = recipe.core.id,
-            weaponID = recipe.weapon.id
-        };
+        // 2. 유닛 생성 (이제 조립 데이터 Json 같은 건 필요 없음!)
+        // 유닛 프리팹 이름은 UnitData 안에 있는 프리팹 이름을 사용하거나, 
+        // Resources 폴더에 있는 프리팹 이름을 직접 써야 함.
 
-        string json = JsonUtility.ToJson(parts);
-
-        // 3) InstantiationData에 태그 + 조립정보 적용
-        object[] instantiationData = new object[]
-        {
-            gameObject.tag,
-            json
-        };
+        // 주의: PhotonNetwork.Instantiate는 Resources 폴더 안의 파일 이름(String)이 필요함.
+        // UnitData에 prefabName string 변수를 추가해서 쓰거나, 
+        // 프리팹 이름을 규칙적으로 지어서(예: "Unit_Marine") 사용해야 합니다.
 
         PhotonNetwork.Instantiate(
-            unitPrefabName,
+            data.unitPrefab.name, // 프리팹의 이름과 Resources 폴더 파일명이 같아야 함!
             spawnPoint.position,
-            spawnPoint.rotation,
-            0,
-            instantiationData
+            spawnPoint.rotation
         );
     }
 }

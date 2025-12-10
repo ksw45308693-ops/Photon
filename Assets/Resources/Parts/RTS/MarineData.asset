@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d4f4791cc70b4841bad97cf69ff3ae6, type: 3}
+  m_Name: MarineData
+  m_EditorClassIdentifier: 
+  unitName: 
+  cost: 0
+  buildTime: 0
+  maxHealth: 0
+  moveSpeed: 0
+  turnSpeed: 120
+  damage: 0
+  attackRange: 0
+  fireRate: 0
+  isMelee: 0
+  unitPrefab: {fileID: 100052, guid: f4209d51d1ad0434299f2d498ee076ba, type: 3}
+  projectilePrefab: {fileID: 4284050582854179270, guid: 7231406759d03c741ad41d0cee499494, type: 3}
+  deathEffect: {fileID: 0}

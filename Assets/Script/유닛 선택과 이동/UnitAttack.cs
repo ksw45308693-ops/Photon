@@ -3,139 +3,160 @@ using Photon.Pun;
 
 public class UnitAttack : MonoBehaviourPun
 {
-    private UnitAssembler assembler;
+    private UnitStatController statController;
     private TeamEntity myTeam;
 
-    // 공격 관련 변수
     private float fireCountdown = 0f;
     private Transform currentTarget;
 
-    [Header("Effects")]
-    public Transform firePoint; // 원거리: 발사 위치, 근접: 타격 이펙트 위치
+    public Transform firePoint;
+
+    // 적을 찾는 주기 (매 프레임 찾으면 성능 저하가 올 수 있음)
+    private float updateTargetCount = 0f;
 
     void Start()
     {
-        assembler = GetComponent<UnitAssembler>();
+        statController = GetComponent<UnitStatController>();
         myTeam = GetComponent<TeamEntity>();
     }
 
     void Update()
     {
-        if (!photonView.IsMine) return; // 내 유닛만 연산
-        if (assembler.weaponPart == null) return;
+        if (!photonView.IsMine) return;
+        // 데이터가 없으면 공격 불가
+        if (statController == null || statController.unitData == null) return;
 
-        FindNearestEnemy();
+        // 매 프레임 실행하면 무거울 수 있으므로 0.5초마다 타겟 갱신 (선택 사항)
+        updateTargetCount -= Time.deltaTime;
+        if (updateTargetCount <= 0f)
+        {
+            FindNearestEnemy();
+            updateTargetCount = 0.5f;
+        }
 
         if (currentTarget != null)
         {
-            // 1. 회전 (적을 바라봄)
             LookAtTarget();
 
-            // 2. 공격 쿨타임 체크
             if (fireCountdown <= 0f)
             {
-                // [핵심] 공격 타입에 따라 다른 행동을 함
-                if (assembler.weaponPart.attackType == AttackType.Melee)
+                // [변경] 데이터에서 근접/원거리 여부 확인
+                if (statController.unitData.isMelee)
                 {
-                    // 근접 공격 (직접 타격)
                     photonView.RPC("RPC_MeleeAttack", RpcTarget.All);
                 }
                 else
                 {
-                    // 원거리 공격 (총알 발사)
                     photonView.RPC("RPC_RangedAttack", RpcTarget.All);
                 }
 
-                fireCountdown = 1f / assembler.weaponPart.fireRate;
+                // [변경] 데이터에서 공격 속도 가져오기
+                fireCountdown = 1f / statController.unitData.fireRate;
             }
         }
+
         fireCountdown -= Time.deltaTime;
     }
 
-    void LookAtTarget()
+    // [추가됨] 가장 가까운 적을 찾는 로직
+    void FindNearestEnemy()
     {
-        Vector3 dir = currentTarget.position - transform.position;
-        dir.y = 0; // 높이 차이 무시 (평지 기준)
-        if (dir != Vector3.zero)
-        {
-            Quaternion lookRot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Lerp(transform.rotation, lookRot, Time.deltaTime * 10f);
-        }
-    }
+        // 데이터에서 사거리 가져오기
+        float range = statController.unitData.attackRange;
 
-    // --- [근접 공격 로직] ---
-    [PunRPC]
-    void RPC_MeleeAttack()
-    {
-        // 1. 시각 효과 (칼 휘두르는 소리나 이펙트가 있다면 여기서 재생)
-        // Debug.Log($"{name}의 근접 공격! (슉!)");
+        // 사거리 내의 모든 콜라이더 검출
+        Collider[] colliders = Physics.OverlapSphere(transform.position, range);
 
-        // 2. 데미지 적용 (오직 공격자 컴퓨터에서만 계산 - 중복 데미지 방지)
-        if (photonView.IsMine && currentTarget != null)
+        float shortestDistance = Mathf.Infinity;
+        Transform nearestEnemy = null;
+
+        foreach (Collider col in colliders)
         {
-            // 거리가 여전히 가까운지 한 번 더 확인 (안전장치)
-            float dist = Vector3.Distance(transform.position, currentTarget.position);
-            // 사거리보다 약간 더 여유 있게(1.2배) 체크
-            if (dist <= assembler.weaponPart.attackRange * 1.2f)
+            // 자기 자신은 제외
+            if (col.gameObject == gameObject) continue;
+
+            // 상대방이 TeamEntity를 가지고 있는지 확인
+            TeamEntity targetTeam = col.GetComponent<TeamEntity>();
+
+            // TeamEntity가 있고, 나와 팀이 다를 경우에만 적으로 간주
+            if (targetTeam != null && targetTeam.GetTeamID() != myTeam.GetTeamID())
             {
-                // 적의 체력 스크립트를 찾아서 직접 데미지를 줌
-                UnitHealth enemyHealth = currentTarget.GetComponentInParent<UnitHealth>();
-                if (enemyHealth != null)
+                // 거리를 계산해서 가장 가까운 적을 찾음
+                float distanceToEnemy = Vector3.Distance(transform.position, col.transform.position);
+                if (distanceToEnemy < shortestDistance)
                 {
-                    enemyHealth.TakeDamage(assembler.weaponPart.damage);
+                    shortestDistance = distanceToEnemy;
+                    nearestEnemy = col.transform;
                 }
             }
         }
+
+        // 가장 가까운 적을 타겟으로 설정
+        currentTarget = nearestEnemy;
     }
 
-    // --- [원거리 공격 로직 (기존 Shoot)] ---
+    // [추가됨] 타겟을 바라보는 로직
+    void LookAtTarget()
+    {
+        if (currentTarget == null) return;
+
+        Vector3 dir = currentTarget.position - transform.position;
+        // 높이 차이는 무시하고 수평 회전만 하려면 y를 0으로 설정
+        dir.y = 0;
+
+        if (dir != Vector3.zero)
+        {
+            Quaternion lookRotation = Quaternion.LookRotation(dir);
+            // 부드럽게 회전 (Time.deltaTime * 속도)
+            Vector3 rotation = Quaternion.Lerp(transform.rotation, lookRotation, Time.deltaTime * 10f).eulerAngles;
+            transform.rotation = Quaternion.Euler(0f, rotation.y, 0f);
+        }
+    }
+
     [PunRPC]
     void RPC_RangedAttack()
     {
-        if (assembler.weaponPart.projectilePrefab == null) return;
+        GameObject prefab = statController.unitData.projectilePrefab;
+        if (prefab == null) return;
 
-        GameObject bulletGO = Instantiate(assembler.weaponPart.projectilePrefab, firePoint.position, firePoint.rotation);
-
+        GameObject bulletGO = Instantiate(prefab, firePoint.position, firePoint.rotation);
         Projectile projectile = bulletGO.GetComponent<Projectile>();
+
         if (projectile != null)
         {
-            projectile.damage = assembler.weaponPart.damage;
+            projectile.damage = statController.unitData.damage;
             projectile.shooterTeamID = myTeam.GetTeamID();
             projectile.isRealBullet = photonView.IsMine;
         }
     }
 
-    void FindNearestEnemy()
+    [PunRPC]
+    void RPC_MeleeAttack()
     {
-        float range = assembler.weaponPart.attackRange;
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, range);
-
-        float shortestDistance = Mathf.Infinity;
-        GameObject nearestEnemy = null;
-
-        foreach (var hitCollider in hitColliders)
+        if (photonView.IsMine && currentTarget != null)
         {
-            TeamEntity targetTeam = hitCollider.GetComponentInParent<TeamEntity>();
-
-            if (targetTeam != null && targetTeam.GetTeamID() != myTeam.GetTeamID())
+            float dist = Vector3.Distance(transform.position, currentTarget.position);
+            // 사거리 내에 있는지 다시 확인 (약간의 오차 허용 * 1.5f)
+            if (dist <= statController.unitData.attackRange * 1.5f)
             {
-                float distanceToEnemy = Vector3.Distance(transform.position, hitCollider.transform.position);
-                if (distanceToEnemy < shortestDistance)
+                UnitHealth enemyHealth = currentTarget.GetComponent<UnitHealth>();
+                // 혹은 부모에 Health가 있다면: currentTarget.GetComponentInParent<UnitHealth>();
+
+                if (enemyHealth != null)
                 {
-                    shortestDistance = distanceToEnemy;
-                    nearestEnemy = hitCollider.gameObject;
+                    enemyHealth.TakeDamage(statController.unitData.damage);
                 }
             }
         }
-        currentTarget = (nearestEnemy != null) ? nearestEnemy.transform : null;
     }
 
+    // [선택] 에디터에서 공격 사거리를 눈으로 보기 위한 기즈모
     void OnDrawGizmosSelected()
     {
-        if (assembler != null && assembler.weaponPart != null)
+        if (statController != null && statController.unitData != null)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, assembler.weaponPart.attackRange);
+            Gizmos.DrawWireSphere(transform.position, statController.unitData.attackRange);
         }
     }
 }
