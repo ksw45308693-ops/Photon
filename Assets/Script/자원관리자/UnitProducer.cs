@@ -3,58 +3,37 @@ using Photon.Pun;
 
 public class UnitProducer : MonoBehaviour
 {
-    public string unitPrefabName = "Unit";
     public Transform spawnPoint;
 
+    // [변경] 복잡한 Recipe 클래스 삭제 -> 단순 구조체 사용
     [System.Serializable]
-    public class UnitRecipe
+    public class SimpleUnitInfo
     {
-        public string name;
-        public int cost;
-        public LegPartData leg;
-        public CorePartData core;
-        public WeaponPartData weapon;
+        public string unitName;        // UI 표시용 이름
+        public string prefabName;      // Resources 폴더 안의 프리팹 파일 이름
+        public int cost;               // 생산 비용
+        public float buildTime = 2f;   // 생산 시간 (나중에 구현)
     }
 
-    public UnitRecipe[] recipes;
+    public SimpleUnitInfo[] unitList;
 
     public void ProduceUnit(int index)
     {
-        if (index < 0 || index >= recipes.Length)
-            return;
+        if (index < 0 || index >= unitList.Length) return;
 
-        UnitRecipe recipe = recipes[index];
+        SimpleUnitInfo info = unitList[index];
 
-        // 1) 자원 체크
-        if (ResourceManager.Instance.UseWatt(recipe.cost) == false)
+        // 1. 자원 체크
+        if (ResourceManager.Instance.UseWatt(info.cost) == false)
         {
-            Debug.Log("와트 부족!");
+            Debug.Log("자원이 부족합니다!");
             return;
         }
 
-        // 2) 조립 데이터 준비
-        UnitNetworkSync.UnitPartsData parts = new UnitNetworkSync.UnitPartsData
-        {
-            legID = recipe.leg.id,
-            coreID = recipe.core.id,
-            weaponID = recipe.weapon.id
-        };
+        // 2. 유닛 생성 (데이터 전달 필요 없음 -> 기본 프리팹 그대로 생성)
+        // instantiateData에 null을 넣어도 됩니다.
+        PhotonNetwork.Instantiate(info.prefabName, spawnPoint.position, spawnPoint.rotation);
 
-        string json = JsonUtility.ToJson(parts);
-
-        // 3) InstantiationData에 태그 + 조립정보 적용
-        object[] instantiationData = new object[]
-        {
-            gameObject.tag,
-            json
-        };
-
-        PhotonNetwork.Instantiate(
-            unitPrefabName,
-            spawnPoint.position,
-            spawnPoint.rotation,
-            0,
-            instantiationData
-        );
+        Debug.Log($"{info.unitName} 생산 시작!");
     }
 }
